@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-ParaFinder Ultra v3.0 - Professional Recon Suite
-The ultimate parameter discovery & API recon tool
+ParaFinder
 """
 
 import argparse
@@ -12,15 +11,14 @@ import os
 import re
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Set, Optional, AsyncGenerator
-from urllib.parse import urlparse, parse_qs, urlencode
+from typing import List, Dict, Set, Optional
+
+from urllib.parse import urlparse, parse_qs
 
 import aiohttp
-import requests
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
@@ -30,13 +28,11 @@ from rich import box
 console = Console()
 VERSION = "3.0"
 
-# Extensions to skip
 SKIP_EXT = {
     ".jpg", ".jpeg", ".png", ".gif", ".css", ".js", ".svg", ".ico", ".woff", ".woff2",
     ".ttf", ".eot", ".pdf", ".zip", ".mp4", ".mp3", ".avi", ".exe", ".iso", ".apk"
 }
 
-# High-risk keywords
 HIGH_RISK = {
     "auth", "token", "password", "pass", "session", "secret", "cmd", "exec", "eval",
     "admin", "key", "api", "jwt", "bearer", "oauth", "client_id", "client_secret"
@@ -46,14 +42,12 @@ MED_RISK = {
     "return", "callback", "url", "path", "file", "dir", "debug", "test"
 }
 
-# Built-in API wordlist (top 500 from Kiterunner)
 API_ROUTES = [
     "api", "v1", "v2", "rest", "graphql", "admin", "login", "auth", "oauth",
     "users", "profile", "settings", "config", "health", "status", "ping",
     "metrics", "debug", "test", "upload", "download", "search", "query"
 ]
 
-# GF Patterns (auto-updated from tomnomnom/gf)
 GF_PATTERNS = {
     "ssrf": r"(?i)(url|redirect|next|dest|callback|to|ref|return|domain|host|path|uri|port|site)",
     "xss": r"(?i)(input|query|search|q|msg|error|title|name|value|text|html|body|script|src|href|on\w+)",
@@ -64,12 +58,11 @@ GF_PATTERNS = {
     "ssti": r"(?i)(template|tpl|render|view|layout|theme|block|section|partial|include|extends)",
 }
 
-# Banner
 BANNER = f"""
 [bold cyan]╔═╗┌─┐┬─┐┌─┐┬─┐┌─┐┬─┐┌─┐┬─┐  ╔═╗╔═╗╦╔╗╔╔╦╗╔═╗╦═╗[/]
 [bold cyan]╚═╗├┤ ├┬┘├┤ ├┬┘├─┤├┬┘├─┤├┬┘  ╠═╝║╣ ║║║║ ║ ║╣ ╠╦╝[/]
 [bold cyan]╚═╝└─┘┴└─└─┘┴└─┴ ┴┴└─┴ ┴┴└─  ╩  ╚═╝╩╝╚╝ ╩ ╚═╝╩╚═[/]
-[bold magenta]       ParaFinder Ultra v{VERSION} - Professional Recon[/]
+[bold magenta]     ParaFinder  v{VERSION} - By INTELEON404 [/]
 """
 
 # ==================== DATACLASS ====================
@@ -104,13 +97,11 @@ class Config:
 
 # ==================== HELPERS ====================
 def print_banner():
-    if not console.is_terminal:
-        return
-    console.print(BANNER)
+    if console.is_terminal:
+        console.print(BANNER)
 
 def normalize_url(u: str) -> str:
-    u = u.strip().split("#")[0].rstrip("/")
-    return u
+    return u.strip().split("#")[0].rstrip("/")
 
 def has_skip_ext(u: str) -> bool:
     return any(u.lower().endswith(ext) for ext in SKIP_EXT)
@@ -123,7 +114,7 @@ def extract_params(urls: List[str]) -> Dict[str, int]:
     params = {}
     for u in urls:
         qs = urlparse(u).query
-        for k in parse_qs(qs):
+        for k in parse_qs(qs, keep_blank_values=True):
             k = k.lower()
             params[k] = params.get(k, 0) + 1
     return params
@@ -147,17 +138,13 @@ def score_params(params: Dict[str, int], gf_pat: Optional[re.Pattern]) -> tuple[
 
 # ==================== SOURCES ====================
 async def fetch_wayback(domain: str, cfg: Config, session: aiohttp.ClientSession) -> List[str]:
-    url = "https://web.archive.org/cdx/search/cdx"
     params = {
         "url": f"*.{domain}/*" if cfg.subs else f"{domain}/*",
-        "output": "text",
-        "fl": "original",
-        "collapse": "urlkey",
-        "limit": "10000"
+        "output": "text", "fl": "original", "collapse": "urlkey", "limit": "10000"
     }
     if cfg.level == "high":
         params["filter"] = "statuscode:200"
-    async with session.get(url, params=params) as r:
+    async with session.get("https://web.archive.org/cdx/search/cdx", params=params) as r:
         text = await r.text() if r.status < 500 else ""
     urls = [normalize_url(line) for line in text.splitlines() if "?" in line and not has_skip_ext(line)]
     if cfg.download_archives:
@@ -167,7 +154,7 @@ async def fetch_wayback(domain: str, cfg: Config, session: aiohttp.ClientSession
 async def download_archives(urls: List[str], cfg: Config):
     os.makedirs(f"{cfg.outdir}/archives", exist_ok=True)
     async with aiohttp.ClientSession() as sess:
-        for u in urls[:100]:  # limit
+        for u in urls[:100]:
             try:
                 async with sess.get(u, timeout=10) as r:
                     if r.status == 200:
@@ -178,15 +165,12 @@ async def download_archives(urls: List[str], cfg: Config):
                 pass
 
 async def fetch_otx(domain: str, cfg: Config, session: aiohttp.ClientSession) -> List[str]:
-    url = f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/url_list"
-    async with session.get(url) as r:
+    async with session.get(f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/url_list") as r:
         data = await r.json() if r.status < 500 else {}
     return [u["url"] for u in data.get("url_list", []) if "?" in u["url"]]
 
-# Add more sources: urlscan, commoncrawl, github, vt, ix (stubbed)
 async def fetch_urlscan(domain: str, cfg: Config, session: aiohttp.ClientSession) -> List[str]:
-    url = f"https://urlscan.io/api/v1/search/?q=domain:{domain}"
-    async with session.get(url) as r:
+    async with session.get(f"https://urlscan.io/api/v1/search/?q=domain:{domain}") as r:
         data = await r.json() if r.status < 500 else {}
     return [t["page"]["url"] for t in data.get("results", []) if "?" in t["page"]["url"]]
 
@@ -205,21 +189,6 @@ async def discover_apis(domain: str, cfg: Config, session: aiohttp.ClientSession
                 pass
     return apis
 
-# ==================== FUZZING (Arjun-style) ====================
-async def fuzz_params(session: aiohttp.ClientSession, base_url: str, params: List[str], cfg: Config) -> Dict[str, bool]:
-    valid = {}
-    payload = "FUZZ123TEST"
-    for p in params:
-        test_url = f"{base_url}?{p}={payload}" if "?" not in base_url else f"&{p}={payload}"
-        try:
-            r1 = await session.get(base_url, timeout=10)
-            r2 = await session.get(test_url, timeout=10)
-            if len(await r2.text()) != len(await r1.text()):
-                valid[p] = True
-        except:
-            pass
-    return valid
-
 # ==================== COLLECTOR ====================
 async def collect_urls(cfg: Config) -> List[str]:
     sources = {
@@ -235,7 +204,8 @@ async def collect_urls(cfg: Config) -> List[str]:
     if cfg.tor:
         proxy = "socks5://127.0.0.1:9050"
 
-    async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers={"User-Agent": f"ParaFinder/{VERSION}"}) as session:
+    headers = {"User-Agent": f"ParaFinder/{VERSION}"}
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
         if proxy:
             session.proxy = proxy
 
@@ -260,7 +230,7 @@ async def collect_urls(cfg: Config) -> List[str]:
                         if not cfg.quiet:
                             console.print(f"[red][!] {name} failed: {e}[/]")
 
-            await asyncio.gather(*(run_source(name, func) for name, func in sources.items() if name in active))
+            await asyncio.gather(*(run_source(n, f) for n, f in sources.items() if n in active))
 
         urls = dedupe(all_urls)
         if cfg.include:
@@ -270,11 +240,9 @@ async def collect_urls(cfg: Config) -> List[str]:
         if cfg.gf:
             pat = re.compile(GF_PATTERNS[cfg.gf], re.IGNORECASE)
             urls = [u for u in urls if pat.search(u)]
-
         if cfg.api:
             apis = await discover_apis(cfg.domain, cfg, session)
             urls.extend(apis)
-
         return dedupe(urls)
 
 # ==================== OUTPUT ====================
@@ -298,7 +266,7 @@ def save_nuclei(result: dict, path: str):
 """)
 
 # ==================== MAIN ====================
-async def main():
+async def _main() -> None:
     parser = argparse.ArgumentParser(description=f"ParaFinder Ultra v{VERSION} - Professional Recon")
     parser.add_argument("-d", "--domain", required=True)
     parser.add_argument("-t", "--threads", type=int, default=50)
@@ -381,7 +349,6 @@ async def main():
         "timestamp": datetime.now().isoformat(),
     }
 
-    # Summary
     table = Table(title="RECON SUMMARY", box=box.ROUNDED)
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
@@ -392,7 +359,6 @@ async def main():
     table.add_row("Duration", result["scan_duration"])
     console.print(table)
 
-    # Save
     os.makedirs(cfg.outdir, exist_ok=True)
     saved = []
 
@@ -411,7 +377,7 @@ async def main():
             json.dump(result, f, indent=2)
         saved.append(path)
 
-    if "csv" in cfg.output_formats or cfg.jsonl:
+    if "csv" in cfg.output_formats:
         path = f"{cfg.outdir}/{base}_params.csv"
         with open(path, "w", newline="") as f:
             w = csv.writer(f)
@@ -430,9 +396,10 @@ async def main():
     for p in saved:
         console.print(f"  [green]→ {p}[/]")
 
+# ==================== ENTRY POINT ====================
+def main():
+    """Entry point for pipx"""
+    asyncio.run(_main())
+
 if __name__ == "__main__":
-    try:
-        import aiohttp, rich
-    except ImportError:
-        os.system("pip install aiohttp rich")
-    asyncio.run(main())
+    main()
