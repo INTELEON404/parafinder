@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.17"]
 build-backend = "hatchling.build"
 
 [project]
@@ -42,7 +42,7 @@ Issues = "https://github.com/inteleon404/parafinder/issues"
 Documentation = "https://github.com/inteleon404/parafinder#readme"
 
 [project.scripts]
-parafinder = "parafinder:main"
+parafinder = "parafinder.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -54,7 +54,7 @@ dev = [
 
 [tool.hatch.build]
 include = [
-    "parafinder.py",
+    "parafinder/",
     "README.md",
     "LICENSE"
 ]
