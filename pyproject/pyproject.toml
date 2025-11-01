@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "parafinder"
+version = "3.0.0"
+description = "ParaFinder"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "intekeon404", email = "404xl@proton.me"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security"
+]
+dependencies = [
+    "aiohttp>=3.9",
+    "rich>=13.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/inteleon404/parafinder"
+Repository = "https://github.com/inteleon404/parafinder"
+Issues = "https://github.com/inteleon404/parafinder/issues"
+
+[project.scripts]
+parafinder = "parafinder:main"
