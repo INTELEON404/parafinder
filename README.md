@@ -1,8 +1,8 @@
 # ParaFinder v1.3
-![Banner](https://img.shields.io/badge/ParaFinder-v1.3-yellow?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat&logo=python)
-![License](https://img.shields.io/github/license/INTELEON404/parafinder?style=flat)
-![Stars](https://img.shields.io/github/stars/INTELEON404/parafinder?style=social)
+
+![ParaFinder v1.3](https://img.shields.io/badge/ParaFinder-v1.3-yellow?style=for-the-badge)
+![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat\&logo=python)
+![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat)
 
 ```
 ░█▀█░█▀█░█▀▄░█▀█░█▀▀░▀█▀░█▀█░█▀▄░█▀▀░█▀▄
@@ -10,50 +10,66 @@
 ░▀░░░▀░▀░▀░▀░▀░▀░▀░░░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀
 ```
 
-> **Parameter Discovery Tool** – Fast, Async, FUZZ-Ready  
-> **Built by INTELEON404** – Inspired by ParamSpider
+> **Parameter Discovery Tool — Fast, Async, FUZZ-Ready**
+> Built by **INTELEON404** • Inspired by ParamSpider
 
 ---
 
-## Features
+## Overview
 
-- **Async URL Collection** from Wayback, OTX, URLScan
-- **FUZZ Injection** (`FUZZ` placeholder) – Ready for `ffuf`, `Burp`, `ParamSpider`
-- **GF Pattern Filtering** (`ssrf`, `xss`, `lfi`, `rce`, etc.)
-- **API Endpoint Discovery**
-- **High-Risk Parameter Scoring**
-- **Subdomain Support**
-- **Proxy & TOR Support**
-- **Archive Download**
-- **Clean TXT Output**
+ParaFinder is a parameter- and endpoint-discovery utility designed for fast asynchronous collection of URLs and parameters from multiple archive and reconnaissance sources. It prepares FUZZ-ready endpoints for parameter fuzzing and integrates common filtering and scoring to help prioritize high-risk inputs.
+
+**Key capabilities:**
+
+* Asynchronous scraping from Wayback, URLScan, and OTX
+* FUZZ placeholder injection for `ffuf`, Burp Intruder and other fuzzers
+* GF-pattern filtering (`ssrf`, `xss`, `lfi`, `rce`, etc.)
+* API endpoint discovery and subdomain support
+* High-risk parameter scoring and clean TXT output
+* Proxy & TOR support
+* Optional archive (HTML snapshot) download
+
+---
+
+## Badges
+
+* Version: `v1.3`
+* Requires: **Python 3.8+**
+* License: **MIT**
 
 ---
 
 ## Installation
 
+> Clone the repository (recommended):
+
 ```bash
 git clone https://github.com/INTELEON404/parafinder.git
 cd parafinder
-pip install -r requirements.txt --break-system-packages
 ```
 
-> Requires `Python 3.8+`
+> ParaFinder is pure Python — install dependencies into your preferred virtual environment as needed. See `requirements.txt` for third-party packages.
+
+**Note:** This README intentionally shows `git clone` only. Use your environment's package manager (venv, virtualenv, pip in a venv, Poetry, etc.) to install dependencies if you want an isolated setup.
 
 ---
 
-## Usage
+## Quick Start
 
-### Basic Scan
+### Basic scan
+
 ```bash
-python3 paramfinder.py -d tesla.com
+python3 paramfinder.py -d example.com
 ```
 
-### Full Recon (Recommended)
+### Full recon (recommended)
+
 ```bash
-python3 paramfinder.py -d tesla.com --subs --api --threads 100 --gf ssrf --outdir results
+python3 paramfinder.py -d example.com --subs --api --threads 100 --gf ssrf --outdir results
 ```
 
-### With Proxy / TOR
+### Using a proxy or TOR
+
 ```bash
 python3 paramfinder.py -d target.com --proxy 127.0.0.1:8080
 python3 paramfinder.py -d target.com --tor
@@ -61,99 +77,118 @@ python3 paramfinder.py -d target.com --tor
 
 ---
 
-## Command Line Options
+## CLI Options
 
-| Flag | Description |
-|------|-----------|
-| `-d`, `--domain` | Target domain (required) |
-| `-t`, `--threads` | Max concurrent threads (default: 50) |
-| `--subs` | Include subdomains |
-| `--api` | Discover common API endpoints |
-| `--gf` | Filter URLs by GF pattern (`ssrf`, `xss`, etc.) |
-| `--include` / `--exclude` | Regex filters |
-| `--proxy` | HTTP proxy (e.g. `127.0.0.1:8080`) |
-| `--tor` | RouteUse TOR (socks5://127.0.0.1:9050) |
-| `--download-archives` | Save HTML snapshots |
-| `--quiet` | Suppress progress & logs |
-| `--outdir` | Output directory (default: `results`) |
+| Flag                      | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `-d`, `--domain`          | Target domain (required)                               |
+| `-t`, `--threads`         | Max concurrent threads (default: 50)                   |
+| `--subs`                  | Include subdomains in discovery                        |
+| `--api`                   | Discover common API endpoints                          |
+| `--gf`                    | Filter URLs by GF pattern (`ssrf`, `xss`, `lfi`, etc.) |
+| `--include` / `--exclude` | Regex include / exclude filters for URLs               |
+| `--proxy`                 | HTTP proxy (e.g. `127.0.0.1:8080`)                     |
+| `--tor`                   | Route traffic via TOR (socks5://127.0.0.1:9050)        |
+| `--download-archives`     | Save HTML snapshots from archive sources               |
+| `--quiet`                 | Suppress progress output and logs                      |
+| `--outdir`                | Output directory (default: `results`)                  |
 
 ---
 
-## Output Example (`results/tesla.com.txt`)
+## Output
 
-```txt
-# Parafinder Results for: tesla.com
+ParaFinder produces clean, FUZZ-ready TXT output. Example header shown at the top of results files:
+
+```
+# Parafinder Results for: example.com
 # Scanned on: 2025-04-05 12:30:45
 # Duration: 15.32s
 # Total URLs: 487
 # Unique Parameters: 34
 # High-Risk Parameters: 8
 # Generated by Parafinder v1.3 - FUZZ Ready
-
-# TOP 20 PARAMETERS
-# id                         189  [high]
-# token                      102  [high]
-# q                           78  [medium]
-# ...
-
-# FUZZ-READY URLs (ParamSpider Style)
-https://tesla.com/search?q=FUZZ
-https://api.tesla.com/v1/user?id=FUZZ&token=FUZZ
-https://shop.tesla.com/cart?ref=FUZZ&session=FUZZ
 ```
 
-> **Use with:**
-> - `ffuf -u "URL" -w wordlist.txt`
-> - `ParamSpider --domain tesla.com --fuzz`
-> - Burp Intruder (set `FUZZ` as payload position)
+It also generates FUZZ-ready endpoints, e.g.:
+
+```
+https://example.com/search?q=FUZZ
+https://api.example.com/v1/user?id=FUZZ&token=FUZZ
+https://shop.example.com/cart?ref=FUZZ&session=FUZZ
+```
+
+Use these outputs directly with fuzzing tools such as `ffuf`, Burp Intruder, or custom scripts.
 
 ---
 
-## GF Patterns
+## GF Patterns (Examples)
 
-| Pattern | Use Case |
-|-------|---------|
-| `ssrf` | URL-based SSRF |
-| `xss` | XSS via input |
-| `lfi` | Local File Inclusion |
-| `rce` | Remote Code Execution |
-| `sqli` | SQL Injection |
-| `idor` | Insecure Direct Object Reference |
-| `ssti` | Server-Side Template Injection |
+| Pattern | Typical use case                   |
+| ------- | ---------------------------------- |
+| `ssrf`  | URL-based SSRF testing             |
+| `xss`   | XSS payload injection              |
+| `lfi`   | Local File Inclusion paths         |
+| `rce`   | Remote code execution entry points |
+| `sqli`  | SQL injection sensitive params     |
+| `idor`  | Insecure direct object references  |
+| `ssti`  | Server-side template injection     |
+
+Example: `--gf xss` to filter results by XSS-related parameter patterns.
+
+---
+
+## Integration & Examples
+
+**Fuzz with ffuf:**
 
 ```bash
---gf xss
+ffuf -u "https://example.com/search?q=FUZZ" -w /path/to/wordlist.txt
 ```
+
+**Burp / Intruder:**
+
+* Import FUZZ-READY URLs into Burp, mark `FUZZ` as the payload insertion point and run your payload list.
+
+---
+
+## Best Practices & Safety
+
+* Only scan targets you own or have explicit permission to test.
+* Use responsible scanning rates and respect `robots.txt` where appropriate.
+* Be cautious when fuzzing endpoints that may trigger destructive actions (deletion, payments, account changes).
 
 ---
 
 ## Contributing
 
-1. Fork the repo
-2. Create your feature branch
-3. Commit your changes
-4. Open a Pull Request
+Contributions are welcome.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit changes and push to your fork
+4. Open a Pull Request and describe the change
+
+Please include tests where applicable and keep changes focused.
+
+---
+
+## Changelog (high level)
+
+* **v1.3** — Improved async collectors, GF filtering, parameter scoring and FUZZ-ready output
 
 ---
 
 ## License
 
-```
-MIT License
-```
+This project is released under the **MIT License**.
 
 ---
 
 ## Author
 
-**INTELEON404**  
-[GitHub](https://github.com/INTELEON404) • [Twitter/X](https://x.com/INTELEON404)
+**INTELEON404**
+GitHub: [https://github.com/INTELEON404](https://github.com/INTELEON404)
 
 ---
 
-> **"Find parameters. Own the attack surface."**  
-> **ParaFinder – Because every FUZZ matters.**
-
----
-
-
+> **ParaFinder — Because every FUZZ matters.**
