@@ -1,6 +1,5 @@
-# ParaFinder v1.3
 <div align="center">
-  <img src="https://github.com/INTELEON404/Template/blob/main/vot-preview.png" alt="Logo" />
+  <img src="https://github.com/INTELEON404/Template/blob/main/parafinder.png" alt="Logo" />
 </div>
 
 
