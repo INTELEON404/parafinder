@@ -1,4 +1,9 @@
 # ParaFinder v1.3
+<div align="center">
+  <img src="[https://github.com/INTELEON404/Template/blob/main/vot-preview.png](https://github.com/INTELEON404/Template/blob/main/parafinder.png)" alt="Logo" />
+</div>
+
+
 ![Banner](https://img.shields.io/badge/ParaFinder-v1.3-yellow?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat&logo=python)
 ![License](https://img.shields.io/github/license/INTELEON404/parafinder?style=flat)
