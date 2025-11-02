@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-"""
-ParaFinder
-"""
 
 import argparse
 import asyncio
-import csv
-import json
 import os
 import re
 import sys
@@ -15,7 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Set, Optional
-
 from urllib.parse import urlparse, parse_qs
 
 import aiohttp
@@ -58,12 +52,16 @@ GF_PATTERNS = {
     "ssti": r"(?i)(template|tpl|render|view|layout|theme|block|section|partial|include|extends)",
 }
 
-BANNER = f"""
-[bold cyan]╔═╗┌─┐┬─┐┌─┐┬─┐┌─┐┬─┐┌─┐┬─┐  ╔═╗╔═╗╦╔╗╔╔╦╗╔═╗╦═╗[/]
-[bold cyan]╚═╗├┤ ├┬┘├┤ ├┬┘├─┤├┬┘├─┤├┬┘  ╠═╝║╣ ║║║║ ║ ║╣ ╠╦╝[/]
-[bold cyan]╚═╝└─┘┴└─└─┘┴└─┴ ┴┴└─┴ ┴┴└─  ╩  ╚═╝╩╝╚╝ ╩ ╚═╝╩╚═[/]
-[bold magenta]     ParaFinder  v{VERSION} - By INTELEON404 [/]
-"""
+# NEW SPACE FORCE BANNER
+BANNER = """
+[bold cyan]__________  _____ __________    _____  ___________.___ _______  ________  _____________________[/]
+[bold cyan]\\______   \\/  _  \\\\______   \\  /  _  \\ \\_   _____/|   |\\      \\ \\______ \\ \\_   _____/\\______   \\[/]
+[bold cyan] |     ___/  /_\\  \\|       _/ /  /_\\  \\ |    __)  |   |/   |   \\ |    |  \\ |    __)_  |       _/[/]
+[bold cyan] |    |  /    |    \\    |   \\/    |    \\|     \\   |   /    |    \\|    `   \\|        \\ |    |   \\[/]
+[bold cyan] |____|  \\____|__  /____|_  /\\____|__  /\\___  /   |___\\____|__  /_______  /_______  / |____|_  /[/]
+[bold cyan]                 \\/       \\/         \\/     \\/                \\/        \\/        \\/         \\/[/]
+[bold magenta]                             ParaFinder v{VERSION} - By INTELEON404 [/]
+""".format(VERSION=VERSION)
 
 # ==================== DATACLASS ====================
 @dataclass
@@ -72,7 +70,6 @@ class Config:
     threads: int
     include: Optional[re.Pattern]
     exclude: Optional[re.Pattern]
-    follow: bool
     rate_limit: float
     retries: int
     sources: Set[str]
@@ -80,20 +77,13 @@ class Config:
     samples: int
     outdir: str
     timeout: int
-    fuzz: bool
-    level: str
-    api: bool
     gf: Optional[str]
-    wordlist: Optional[str]
-    depth: int
     subs: bool
     proxy: Optional[str]
     tor: bool
     download_archives: bool
     quiet: bool
-    output_formats: List[str]
-    jsonl: bool
-    nuclei: bool
+    api: bool
 
 # ==================== HELPERS ====================
 def print_banner():
@@ -174,7 +164,6 @@ async def fetch_urlscan(domain: str, cfg: Config, session: aiohttp.ClientSession
         data = await r.json() if r.status < 500 else {}
     return [t["page"]["url"] for t in data.get("results", []) if "?" in t["page"]["url"]]
 
-# ==================== API DISCOVERY ====================
 async def discover_apis(domain: str, cfg: Config, session: aiohttp.ClientSession) -> List[str]:
     base = f"https://{domain}"
     apis = []
@@ -204,7 +193,7 @@ async def collect_urls(cfg: Config) -> List[str]:
     if cfg.tor:
         proxy = "socks5://127.0.0.1:9050"
 
-    headers = {"User-Agent": f"ParaFinder/{VERSION}"}
+    headers = {"User-Agent": f"ParaFinder-SpaceForce/{VERSION}"}
     async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
         if proxy:
             session.proxy = proxy
@@ -245,64 +234,61 @@ async def collect_urls(cfg: Config) -> List[str]:
             urls.extend(apis)
         return dedupe(urls)
 
-# ==================== OUTPUT ====================
-def save_jsonl(urls: List[str], path: str):
-    with open(path, "w") as f:
-        for u in urls:
-            f.write(json.dumps({"url": u}) + "\n")
+# ==================== OUTPUT (TXT ONLY) ====================
+def save_txt_only(domain: str, urls: List[str], params: Dict[str, int], scores: Dict[str, str], high: List[str], duration: float, outdir: str):
+    os.makedirs(outdir, exist_ok=True)
+    filename = f"{domain}.txt"
+    path = os.path.join(outdir, filename)
 
-def save_nuclei(result: dict, path: str):
     with open(path, "w") as f:
-        for p in result["high_value"]:
-            f.write(f"""
-- id: parafinder-{p}
-  info:
-    name: High-risk parameter: {p}
-    severity: high
-  http:
-    - method: GET
-      path:
-        - "{{{{BaseURL}}}}?{p}=FUZZ"
-""")
+        f.write(f"ParaFinder Space Force - Target: {domain}\n")
+        f.write(f"Scan Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Duration: {duration:.2f}s\n")
+        f.write(f"Total URLs: {len(urls)}\n")
+        f.write(f"Unique Parameters: {len(params)}\n")
+        f.write(f"High-Risk Parameters: {len(high)}\n")
+        f.write("\n" + "="*60 + "\n")
+        f.write("TOP 20 PARAMETERS (by frequency)\n")
+        f.write("="*60 + "\n")
+        for p, c in sorted(params.items(), key=lambda x: x[1], reverse=True)[:20]:
+            f.write(f"{p:<25} {c:>6}  [{scores.get(p, 'low')}]\n")
+        f.write("\n" + "="*60 + "\n")
+        f.write("ALL URLs WITH PARAMETERS\n")
+        f.write("="*60 + "\n")
+        for u in urls:
+            f.write(u + "\n")
+
+    return path
 
 # ==================== MAIN ====================
 async def _main() -> None:
-    parser = argparse.ArgumentParser(description=f"ParaFinder Ultra v{VERSION} - Professional Recon")
-    parser.add_argument("-d", "--domain", required=True)
+    parser = argparse.ArgumentParser(description=f"ParaFinder Space Force v{VERSION}")
+    parser.add_argument("-d", "--domain", required=True, help="Target domain (e.g. tesla.com)")
     parser.add_argument("-t", "--threads", type=int, default=50)
     parser.add_argument("--include", help="Include regex")
     parser.add_argument("--exclude", help="Exclude regex")
-    parser.add_argument("--follow", action="store_true")
-    parser.add_argument("--rate", type=int, default=0)
+    parser.add_argument("--rate", type=int, default=0, help="Rate limit (requests/sec)")
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--sources", help="wayback,otx,urlscan")
     parser.add_argument("--github-token")
     parser.add_argument("--samples", type=int, default=8)
     parser.add_argument("--outdir", default="results")
     parser.add_argument("--timeout", type=int, default=30)
-    parser.add_argument("--fuzz", action="store_true")
-    parser.add_argument("--level", choices=["low", "high"], default="low")
-    parser.add_argument("--api", action="store_true")
     parser.add_argument("--gf", choices=list(GF_PATTERNS.keys()))
-    parser.add_argument("--wordlist")
-    parser.add_argument("--depth", type=int, default=1)
-    parser.add_argument("--subs", action="store_true")
+    parser.add_argument("--subs", action="store_true", help="Include subdomains")
     parser.add_argument("--proxy")
     parser.add_argument("--tor", action="store_true")
     parser.add_argument("--download-archives", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("-o", "--output", default="txt,json,csv,jsonl")
-    parser.add_argument("--jsonl", action="store_true")
-    parser.add_argument("--nuclei", action="store_true")
+    parser.add_argument("--api", action="store_true", help="Discover API endpoints")
 
     args = parser.parse_args()
 
     cfg = Config(
-        domain=args.domain,
+        domain=args.domain.lower().strip(),
         threads=min(args.threads, 100),
         include=re.compile(args.include) if args.include else None,
         exclude=re.compile(args.exclude) if args.exclude else None,
-        follow=args.follow,
         rate_limit=args.rate,
         retries=args.retries,
         sources={s.strip().lower() for s in (args.sources or "").split(",") if s.strip()},
@@ -310,25 +296,17 @@ async def _main() -> None:
         samples=args.samples,
         outdir=args.outdir,
         timeout=args.timeout,
-        fuzz=args.fuzz,
-        level=args.level,
-        api=args.api,
         gf=args.gf,
-        wordlist=args.wordlist,
-        depth=args.depth,
         subs=args.subs,
         proxy=args.proxy,
         tor=args.tor,
         download_archives=args.download_archives,
         quiet=args.quiet,
-        output_formats=[f.strip().lower() for f in args.output.split(",")],
-        jsonl=args.jsonl,
-        nuclei=args.nuclei,
+        api=args.api,
     )
 
     print_banner()
     start = time.time()
-    base = f"parafinder_{args.domain.replace('.', '_')}_{int(time.time())}"
 
     urls = await collect_urls(cfg)
     if not urls:
@@ -339,66 +317,25 @@ async def _main() -> None:
     gf_pat = re.compile(GF_PATTERNS[cfg.gf], re.IGNORECASE) if cfg.gf else None
     scores, high = score_params(params, gf_pat)
 
-    result = {
-        "domain": cfg.domain,
-        "urls": urls,
-        "parameters": params,
-        "high_value": high,
-        "param_scores": scores,
-        "scan_duration": f"{time.time() - start:.2f}s",
-        "timestamp": datetime.now().isoformat(),
-    }
+    duration = time.time() - start
+    output_file = save_txt_only(cfg.domain, urls, params, scores, high, duration, cfg.outdir)
 
-    table = Table(title="RECON SUMMARY", box=box.ROUNDED)
+    # Summary Table
+    table = Table(title="SPACE FORCE RECON COMPLETE", box=box.ROUNDED)
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
     table.add_row("Target", cfg.domain)
     table.add_row("URLs Found", str(len(urls)))
     table.add_row("Unique Params", str(len(params)))
     table.add_row("High-Risk Params", str(len(high)))
-    table.add_row("Duration", result["scan_duration"])
+    table.add_row("Duration", f"{duration:.2f}s")
+    table.add_row("Output", output_file)
     console.print(table)
 
-    os.makedirs(cfg.outdir, exist_ok=True)
-    saved = []
-
-    if "txt" in cfg.output_formats:
-        path = f"{cfg.outdir}/{base}.txt"
-        with open(path, "w") as f:
-            f.write(f"ParaFinder Ultra v{VERSION}\nTarget: {cfg.domain}\n\n")
-            f.write(f"Total URLs: {len(urls)}\nParams: {len(params)}\nHigh: {len(high)}\n\n")
-            for p, c in sorted(params.items(), key=lambda x: x[1], reverse=True)[:20]:
-                f.write(f"{p}: {c} [{scores[p]}]\n")
-        saved.append(path)
-
-    if "json" in cfg.output_formats:
-        path = f"{cfg.outdir}/{base}.json"
-        with open(path, "w") as f:
-            json.dump(result, f, indent=2)
-        saved.append(path)
-
-    if "csv" in cfg.output_formats:
-        path = f"{cfg.outdir}/{base}_params.csv"
-        with open(path, "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(["param", "count", "score"])
-            for p, c in sorted(params.items(), key=lambda x: x[1], reverse=True):
-                w.writerow([p, c, scores[p]])
-        saved.append(path)
-
-    if cfg.jsonl:
-        save_jsonl(urls, f"{cfg.outdir}/{base}.jsonl")
-
-    if cfg.nuclei:
-        save_nuclei(result, f"{cfg.outdir}/{base}_nuclei.yaml")
-
-    console.print(f"\n[bold green]Scan complete! {len(saved)} files saved:[/]")
-    for p in saved:
-        console.print(f"  [green]→ {p}[/]")
+    console.print(f"\n[bold green]Mission Accomplished! Results saved to:[/] [cyan]{output_file}[/]")
 
 # ==================== ENTRY POINT ====================
 def main():
-    """Entry point for pipx"""
     asyncio.run(_main())
 
 if __name__ == "__main__":
