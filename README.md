@@ -1,5 +1,5 @@
 # ParaFinder v1.3
-![Banner](https://img.shields.io/badge/ParaFinder-v3.0-yellow?style=for-the-badge)
+![Banner](https://img.shields.io/badge/ParaFinder-v1.3-yellow?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat&logo=python)
 ![License](https://img.shields.io/github/license/INTELEON404/parafinder?style=flat)
 ![Stars](https://img.shields.io/github/stars/INTELEON404/parafinder?style=social)
