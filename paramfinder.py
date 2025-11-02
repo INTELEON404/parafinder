@@ -18,7 +18,7 @@ from rich import box
 
 # ==================== CONFIG & GLOBALS ====================
 console = Console()
-VERSION = "3.0"
+VERSION = "1.3"
 FUZZ = "FUZZ"
 
 SKIP_EXT = {
