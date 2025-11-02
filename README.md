@@ -157,26 +157,3 @@ MIT License
 ---
 
 
----
-
-### How to Use
-
-1. Save this as `README.md` in your repo root:
-   ```bash
-   curl -o README.md https://raw.githubusercontent.com/INTELEON404/parafinder/main/README.md
-   ```
-
-2. Add a `requirements.txt`:
-   ```txt
-   aiohttp>=3.8.0
-   rich>=13.0.0
-   ```
-
-3. Commit & push:
-   ```bash
-   git add README.md requirements.txt
-   git commit -m "Add professional README"
-   git push
-   ```
-
----
