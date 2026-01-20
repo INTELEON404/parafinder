@@ -3,7 +3,7 @@
 <br />
 
 [![Go Version](https://img.shields.io/badge/Go-1.21%2B-00ADD8?style=flat&logo=go)](https://go.dev)
-[![Release](https://img.shields.io/badge/Release-v2.1-blue?style=flat)](https://github.com/INTELEON404/parafinder/releases/tag/v3.8)
+[![Release](https://img.shields.io/badge/Release-v2.1-blue?style=flat)](https://github.com/INTELEON404/parafinder/releases/tag/ParaFinderV2.1)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 [![Twitter](https://img.shields.io/badge/Twitter-@INTELEON404-1DA1F2?style=flat&logo=twitter)](https://x.com/INTELEON404)
 
