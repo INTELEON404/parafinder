@@ -502,7 +502,7 @@ func printBanner() {
 	fmt.Fprintf(os.Stderr, "\033[35m"+
 		` █▀█ ▄▀█ █▀█ ▄▀█ █▀▀ █ █▄░█ █▀▄ █▀▀ █▀█
  █▀▀ █▀█ █▀▄ █▀█ █▀░ █ █░▀█ █▄▀ ██▄ █▀▄
- PARAFINDER v%s | %s
+ PARAFINDER v%s | DEVELOPED BY %s
 `+"\033[0m\n", Version, Author)
 }
 
