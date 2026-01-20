@@ -94,7 +94,7 @@ Download pre-compiled binaries from [Releases](https://github.com/INTELEON404/pa
 
 ### Basic Scan
 ```bash
-./parafinder -d example.com
+parafinder -d example.com
 ```
 
 **Output**:
@@ -113,23 +113,28 @@ Download pre-compiled binaries from [Releases](https://github.com/INTELEON404/pa
 ### Advanced Filtering
 ```bash
 ./parafinder -d target.com -t 150 -gf ssrf -mp 2 -o ssrf_targets.txt
-
+```
+```
 ./parafinder -d example.com -v -gf xss
-
+```
+```
 ./parafinder -d target.com -fuzz -gf sqli -silent | nuclei -t sqli/
 ```
 
 ### Multi-Target Scanning
+
 ```bash
 cat domains.txt | ./parafinder -fuzz -json -o output.json
-
+```
+```
 subfinder -d example.com -silent | ./parafinder -t 150 -gf lfi
 ```
 
 ### Stealth Operations
 ```bash
-./parafinder -d target.com --tor -silent
-
+parafinder -d target.com --tor -silent
+```
+```
 ./parafinder -d target.com -proxy socks5://127.0.0.1:1080 -timeout 90
 ```
 
@@ -210,29 +215,23 @@ subfinder -d example.com -silent | ./parafinder -t 150 -gf lfi
 
 ### 1. Rate Limiting Strategy
 ```bash
-# Fast stable connection
-./parafinder -d target.com -rl 100 -t 200 -timeout 20
+parafinder -d target.com -rl 100 -t 200 -timeout 20
 
-# Slow/unstable connection
-./parafinder -d target.com -rl 20 -t 50 -timeout 90
+parafinder -d target.com -rl 20 -t 50 -timeout 90
 ```
 
 ### 2. Thread Tuning
 ```bash
-# Maximum speed (stable network)
-./parafinder -d target.com -t 200 -rl 150
+parafinder -d target.com -t 200 -rl 150
 
-# Stability priority
-./parafinder -d target.com -t 50 -rl 30
+parafinder -d target.com -t 50 -rl 30
 ```
 
 ### 3. FUZZ Integration
 ```bash
-# Direct to ffuf
-./parafinder -d target.com -fuzz -gf xss -silent | ffuf -u FUZZ -w payloads.txt
+parafinder -d target.com -fuzz -gf xss -silent | ffuf -u FUZZ -w payloads.txt
 
-# Pipeline to nuclei
-./parafinder -d target.com -fuzz -gf ssrf -silent | nuclei -t ssrf/ -silent -o results.txt
+parafinder -d target.com -fuzz -gf ssrf -silent | nuclei -t ssrf/ -silent -o results.txt
 ```
 
 ### 4. Parameter Complexity Filtering
@@ -255,11 +254,13 @@ cat targets.txt | ./parafinder -fuzz -json -o all_params.json
 
 ### 6. Pattern Combination
 ```bash
-# Hunt for SSRF + Redirect
-./parafinder -d target.com -gf ssrf -o ssrf.txt
-./parafinder -d target.com -gf redirect -o redirect.txt
+parafinder -d target.com -gf ssrf -o ssrf.txt
+```
+```
+parafinder -d target.com -gf redirect -o redirect.txt
+```
+```
 
-# Or use separate runs for different patterns
 for pattern in ssrf xss sqli lfi rce redirect; do
   ./parafinder -d target.com -gf $pattern -o ${pattern}_targets.txt
 done
@@ -291,7 +292,6 @@ done
 
 ### With gau
 ```bash
-# Combine with gau for maximum coverage
 echo "example.com" | gau | qsreplace FUZZ > gau_urls.txt
 ./parafinder -d example.com -fuzz -silent > parafinder_urls.txt
 cat gau_urls.txt parafinder_urls.txt | sort -u | nuclei -t fuzzing/
